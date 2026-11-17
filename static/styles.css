@@ -1,0 +1,179 @@
+:root {
+    --crimson: #A51C30;
+    --dark: #1E1E1E;
+    --gray: #62666A;
+    --border: #DEE0E3;
+    --creme: #F5F0E6;
+    --light-crimson: #db231d;
+}
+
+body {
+    background-color: white;
+    color: var(--dark);
+    font-family: Arial, sans-serif;
+}
+
+h1,
+h2,
+h3,
+.brand {
+    font-family: Georgia, serif;
+}
+
+.brand {
+    color: var(--creme);
+    font-size: 2rem;
+}
+
+.brand:hover,
+.nav-link:hover,
+.nav-link:focus,
+.nav-link:active {
+    color: white;
+}
+
+.navbar {
+    border-bottom: 1px solid var(--border);
+    background-color: var(--crimson);
+}
+
+.nav-link {
+    color: var(--creme);
+    text-decoration: none;
+}
+
+
+
+.page-title {
+    font-size: 3rem;
+}
+
+.subtitle {
+    color: var(--gray);
+}
+
+.stat-card,
+.content-card {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: white;
+}
+
+.stat-number {
+    color: var(--crimson);
+    font-size: 2.5rem;
+}
+
+.section-heading {
+    border-left: 4px solid var(--crimson);
+    padding-left: 12px;
+}
+
+.game-row {
+    border-top: 1px solid var(--border);
+}
+
+.game-row:first-of-type {
+    border-top: none;
+}
+
+.btn-crimson {
+    background-color: var(--crimson);
+    color: white;
+    border: 1px solid var(--crimson);
+}
+
+.btn-crimson:hover {
+    background-color: #831426;
+    color: white;
+}
+
+.btn-outline-crimson {
+    color: var(--crimson);
+    border: 1px solid var(--crimson);
+    background: white;
+}
+
+.btn-outline-crimson:hover,
+.btn-outline-crimson.active {
+    background-color: var(--crimson);
+    color: white;
+}
+
+.leaderboard-row {
+    border-bottom: 1px solid var(--border);
+    padding: 12px 0;
+}
+
+.current-user {
+    background-color: var(--light-crimson);
+    color: var(--crimson);
+    font-weight: bold;
+}
+
+footer {
+    border-top: 1px solid var(--border);
+    color: var(--gray);
+}
+
+.login-container {
+    max-width: 400px;
+    margin: 80px auto;
+}
+
+.login-container h1 {
+    margin-bottom: 8px;
+}
+
+.login-container p {
+    color: var(--gray);
+}
+
+.login-container .btn {
+    width: 100%;
+}
+
+a {
+    text-decoration: none;
+    font-weight: bold;
+    color: var(--crimson);
+}
+
+a:hover {
+    color: var(--light-crimson);
+}
+
+.btn-primary {
+    --bs-btn-bg: var(--crimson);
+    /* Background color */
+    --bs-btn-color: var(--creme);
+    /* Text color */
+    --bs-btn-hover-bg: var(--creme);
+    /* Hover background color */
+    --bs-btn-hover-color: var(--crimson);
+    /* Hover text color */
+}
+
+.nav-register {
+    background-color: var(--creme);
+    color: var(--crimson);
+    border: 1px solid var(--creme);
+    border-radius: 6px;
+    padding: 8px 16px;
+    transition: 0.2s;
+}
+
+.nav-register:hover {
+    background-color: white;
+    color: var(--crimson);
+    border-color: white;
+}
+
+.nav-login {
+    color: var(--creme);
+    padding: 8px 12px;
+}
+
+.nav-login:hover {
+    color: white;
+}
