@@ -189,8 +189,12 @@ def games():
                 "name": team["displayName"],
                 "logo": team.get("logo"),
                 "record": records[0]["summary"] if records else "N/A",
-                "score": competitor.get("score", "0")
+                "score": competitor.get("score", "0"),
+                "color": team.get("color", "1a1a1a"),
+                "alternate_color": team.get("alternateColor", "ffffff")
+                
             }  
+            print(team["displayName"], team.get("color"), team.get("alternateColor"))
 
             if competitor["homeAway"] == "home":
                 game["home"] = team_data

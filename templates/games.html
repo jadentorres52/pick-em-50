@@ -1,12 +1,14 @@
 {% extends "layout.html" %}
+
 {% block title %}
-NFL Pick'em
+Pick'em 50
 {% endblock %}
 
 {% block main %}
 
 <div class="container py-4">
 
+    <!-- Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h1 class="fw-bold mb-1">Pick'em 50</h1>
@@ -19,6 +21,7 @@ NFL Pick'em
     </div>
 
 
+    <!-- Week Navigation -->
     <div class="d-flex justify-content-between align-items-center border rounded p-3 mb-4">
 
         {% if week > 1 %}
@@ -48,6 +51,7 @@ NFL Pick'em
     </div>
 
 
+    <!-- Games -->
     {% if games %}
 
     <div class="row g-3">
@@ -147,6 +151,49 @@ NFL Pick'em
                     </div>
 
 
+                    <!-- Pick Buttons -->
+                    <div class="row mt-4 g-2">
+
+                        <!-- Away Team Pick -->
+                        <div class="col-6">
+
+                            <button type="button" class="pick-button w-100" data-team-id="{{ game.away.id }}"
+                                data-team-name="{{ game.away.name }}"
+                                style="--team-primary: #{{ game.away.color }}; --team-secondary: #{{ game.away.alternate_color }};"
+                                {% if game.locked %}disabled{% endif %}>
+
+                                {% if game.locked %}
+                                Picks Locked
+                                {% else %}
+                                Pick the {{ game.away.name }}
+                                {% endif %}
+
+                            </button>
+
+                        </div>
+
+
+                        <!-- Home Team Pick -->
+                        <div class="col-6">
+
+                            <button type="button" class="pick-button w-100" data-team-id="{{ game.home.id }}"
+                                data-team-name="{{ game.home.name }}"
+                                style="--team-primary: #{{ game.home.color }}; --team-secondary: #{{ game.home.alternate_color }};"
+                                {% if game.locked %}disabled{% endif %}>
+
+                                {% if game.locked %}
+                                Picks Locked
+                                {% else %}
+                                Pick the {{ game.home.name }}
+                                {% endif %}
+
+                            </button>
+
+                        </div>
+
+                    </div>
+
+
                     <!-- Game Status -->
                     <div class="text-center mt-3">
                         <small class="text-muted">
@@ -191,6 +238,42 @@ NFL Pick'em
             day: "numeric",
             hour: "numeric",
             minute: "2-digit"
+        });
+
+    });
+</script>
+
+
+<!-- Pick Button Selection -->
+<script>
+    document.querySelectorAll(".card").forEach(card => {
+
+        const buttons = card.querySelectorAll(".pick-button");
+
+        buttons.forEach(button => {
+
+            button.addEventListener("click", () => {
+
+                // Reset both buttons.
+                buttons.forEach(team => {
+                    team.classList.remove("selected", "not-selected");
+                    team.textContent = "Pick the " + team.dataset.teamName;
+                });
+
+                // Highlight the selected team.
+                button.classList.add("selected");
+
+                button.textContent = "Picked the " + button.dataset.teamName;
+
+                // Grey out the opposing team.
+                buttons.forEach(team => {
+                    if (team !== button) {
+                        team.classList.add("not-selected");
+                    }
+                });
+
+            });
+
         });
 
     });
