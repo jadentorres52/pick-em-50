@@ -129,9 +129,13 @@
 
         buttons.forEach(button => {
             button.addEventListener("click", async () => {
-
                 const gameId = button.dataset.gameId;
                 const teamId = button.dataset.teamId;
+
+                buttons.forEach(team => {
+                    team.disabled = true;
+                    team.textContent = "Saving your pick...";
+                });
 
                 try {
                     const response = await fetch("/pick", {
@@ -168,6 +172,11 @@
 
                 } catch (error) {
                     alert("Unable to connect to the server.");
+
+                } finally {
+                    buttons.forEach(team => {
+                        team.disabled = false;
+                    });
                 }
             });
         });
