@@ -212,3 +212,11 @@ a:hover {
     cursor: not-allowed;
     opacity: 1;
 }
+
+#login-button:disabled {
+    background-color: (var(--creme));
+    color: var(--crimson);
+    border-color: var(--crimson);
+    opacity: 1;
+    cursor: wait;
+}

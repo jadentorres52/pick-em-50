@@ -1,7 +1,7 @@
 import psycopg
 from psycopg.rows import dict_row
 from dotenv import load_dotenv
-from flask import Flask, abort, render_template, redirect, request, session, flash
+from flask import Flask, jsonify, abort, render_template, redirect, request, session, flash
 import os 
 from functools import wraps 
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -187,7 +187,7 @@ def games():
             "date": event["date"],
             "status": event["status"]["type"]["detail"],
             "state": event["status"]["type"]["state"],
-            "locked": helpers.is_game_locked(event, now)
+            "locked": helpers.is_game_locked(event)
         }
 
         for competitor in competitors:
@@ -196,25 +196,80 @@ def games():
             
             team_data = {
                 "name": team["displayName"],
+                "short_name": team["shortDisplayName"],
                 "logo": team.get("logo"),
+                "id": competitor["id"],
                 "record": records[0]["summary"] if records else "N/A",
                 "score": competitor.get("score", "0"),
                 "color": team.get("color", "1a1a1a"),
                 "alternate_color": team.get("alternateColor", "ffffff")
-                
             }  
-            print(team["displayName"], team.get("color"), team.get("alternateColor"))
-
             if competitor["homeAway"] == "home":
                 game["home"] = team_data
             else:
                 game["away"] = team_data
 
         games.append(game)
-    return render_template("games.html",games=games,week=week,season=season)
+
+    conn = get_db_connection()
+    try:
+        picks = conn.execute("SELECT game_id, picked_team FROM PICKS WHERE user_id = %s", (session["user_id"],)).fetchall()
+    finally:
+        conn.close()
+    user_picks = {pick["game_id"]: pick["picked_team"] for pick in picks}
+    return render_template("games.html",games=games,week=week,season=season,user_picks=user_picks)
 
     
+@app.route("/pick", methods = ["POST"])
+@login_required
+def pick():
+    data = request.get_json()
 
+    if data is None:
+        return jsonify({"error": "Invalid request"}), 400
+
+    if not data.get("game_id") or not data.get("team_id"):
+        return jsonify({"error": "Missing team or game id"}), 400
+    
+    game_id = data["game_id"]
+    team_id = data["team_id"]
+    user_id = session["user_id"]
+    try:
+        response = requests.get(
+            f"https://sports.core.api.espn.com/v2/sports/football/leagues/nfl/events/{game_id}",
+            timeout=10
+        )
+        response.raise_for_status()
+        event = response.json()
+    except requests.RequestException:
+        return jsonify({"error": "Unable to verify game with ESPN"}), 503
+
+    if helpers.is_game_locked(event):
+       return jsonify({"error": "Picks are locked"}), 403
+
+    competitors = event["competitions"][0]["competitors"]
+    if team_id not in [team["id"] for team in competitors]:
+        return jsonify({"error": "Invalid team"}), 403
+    
+
+
+    conn = get_db_connection()
+    try:
+        conn.execute(
+            """
+            INSERT INTO picks (user_id, game_id, picked_team)
+            VALUES (%s, %s, %s)
+            ON CONFLICT (user_id, game_id)
+            DO UPDATE SET picked_team = EXCLUDED.picked_team
+            """,
+            (user_id,game_id,team_id)
+        )
+
+        conn.commit()
+    finally:
+        conn.close()
+
+    return jsonify({"success": True}), 200
 
 
 init_db()

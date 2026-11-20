@@ -1,235 +1,116 @@
 {% extends "layout.html" %}
 
-{% block title %}
-Pick'em 50
-{% endblock %}
-
 {% block main %}
 
-<div class="container py-4">
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>NFL Games</h2>
+    <span class="text-muted">{{ season }} Season</span>
+</div>
 
-    <!-- Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h1 class="fw-bold mb-1">Pick'em 50</h1>
-            <p class="text-muted mb-0">{{ season }} Season</p>
-        </div>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    {% if week > 1 %}
+    <a class="btn btn-outline-secondary" href="{{ url_for('games', season=season, week=week-1) }}">
+        &larr; Previous Week
+    </a>
+    {% else %}
+    <span></span>
+    {% endif %}
 
-        <span class="badge bg-dark fs-6">
-            Regular Season
-        </span>
-    </div>
+    <h4 class="mb-0">Week {{ week }}</h4>
 
-
-    <!-- Week Navigation -->
-    <div class="d-flex justify-content-between align-items-center border rounded p-3 mb-4">
-
-        {% if week > 1 %}
-        <a href="{{ url_for('games', season=season, week=week-1) }}" class="btn btn-outline-dark">
-            &larr; Previous
+    {% if week < 18 %} <a class="btn btn-outline-secondary" href="{{ url_for('games', season=season, week=week+1) }}">
+        Next Week &rarr;
         </a>
-        {% else %}
-        <button class="btn btn-outline-secondary" disabled>
-            &larr; Previous
-        </button>
         {% endif %}
+</div>
 
-        <div class="text-center">
-            <h3 class="fw-bold mb-0">Week {{ week }}</h3>
-            <small class="text-muted">{{ season }} NFL Season</small>
-        </div>
+<div class="row g-4">
+    {% for game in games %}
+    <div class="col-12 col-lg-6">
+        <div class="card h-100 shadow-sm game-card">
+            <div class="card-body">
 
-        {% if week < 18 %} <a href="{{ url_for('games', season=season, week=week+1) }}" class="btn btn-outline-dark">
-            Next &rarr;
-            </a>
-            {% else %}
-            <button class="btn btn-outline-secondary" disabled>
-                Next &rarr;
-            </button>
-            {% endif %}
+                <div class="d-flex justify-content-between mb-3">
+                    <span class="game-time text-muted" data-date="{{ game.date }}">
+                        {{ game.date }}
+                    </span>
+                    <span class="text-muted">{{ game.status }}</span>
+                </div>
 
-    </div>
+                <div class="row align-items-center text-center mb-4">
 
-
-    <!-- Games -->
-    {% if games %}
-
-    <div class="row g-3">
-
-        {% for game in games %}
-
-        <div class="col-12">
-
-            <div class="card shadow-sm border-0">
-
-                <div class="card-body p-3 p-md-4">
-
-                    <!-- Game Date and Lock Status -->
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-
-                        <small class="text-muted game-time" data-date="{{ game.date }}">
-                            Loading time...
-                        </small>
-
-                        {% if game.locked %}
-                        <span class="badge bg-secondary">
-                            Picks Locked
-                        </span>
-                        {% else %}
-                        <span class="badge bg-success">
-                            Picks Open
-                        </span>
-                        {% endif %}
-
+                    <div class="col-5">
+                        <img src="{{ game.away.logo }}" alt="{{ game.away.name }}"
+                            style="height: 65px; max-width: 100%; object-fit: contain;">
+                        <h5 class="mt-2">{{ game.away.short_name }}</h5>
+                        <p class="text-muted mb-0">{{ game.away.record }}</p>
+                        <h4>{{ game.away.score }}</h4>
                     </div>
 
-
-                    <!-- Teams and Scores -->
-                    <div class="row align-items-center">
-
-                        <!-- Away Team -->
-                        <div class="col-5">
-
-                            <div class="d-flex align-items-center gap-2">
-
-                                <img src="{{ game.away.logo }}" alt="{{ game.away.name }}"
-                                    style="width: 48px; height: 48px; object-fit: contain;">
-
-                                <div>
-                                    <div class="fw-bold">
-                                        {{ game.away.name }}
-                                    </div>
-
-                                    <small class="text-muted">
-                                        {{ game.away.record }}
-                                    </small>
-                                </div>
-
-                            </div>
-
-                        </div>
-
-
-                        <!-- Score -->
-                        <div class="col-2 text-center">
-
-                            {% if game.state == "pre" %}
-                            <span class="fw-bold text-muted">
-                                VS
-                            </span>
-                            {% else %}
-                            <div class="fs-4 fw-bold">
-                                {{ game.away.score }} - {{ game.home.score }}
-                            </div>
-                            {% endif %}
-
-                        </div>
-
-
-                        <!-- Home Team -->
-                        <div class="col-5">
-
-                            <div class="d-flex align-items-center justify-content-end gap-2">
-
-                                <div class="text-end">
-                                    <div class="fw-bold">
-                                        {{ game.home.name }}
-                                    </div>
-
-                                    <small class="text-muted">
-                                        {{ game.home.record }}
-                                    </small>
-                                </div>
-
-                                <img src="{{ game.home.logo }}" alt="{{ game.home.name }}"
-                                    style="width: 48px; height: 48px; object-fit: contain;">
-
-                            </div>
-
-                        </div>
-
+                    <div class="col-2 text-muted fw-bold">
+                        @
                     </div>
 
-
-                    <!-- Pick Buttons -->
-                    <div class="row mt-4 g-2">
-
-                        <!-- Away Team Pick -->
-                        <div class="col-6">
-
-                            <button type="button" class="pick-button w-100" data-team-id="{{ game.away.id }}"
-                                data-team-name="{{ game.away.name }}"
-                                style="--team-primary: #{{ game.away.color }}; --team-secondary: #{{ game.away.alternate_color }};"
-                                {% if game.locked %}disabled{% endif %}>
-
-                                {% if game.locked %}
-                                Picks Locked
-                                {% else %}
-                                Pick the {{ game.away.name }}
-                                {% endif %}
-
-                            </button>
-
-                        </div>
-
-
-                        <!-- Home Team Pick -->
-                        <div class="col-6">
-
-                            <button type="button" class="pick-button w-100" data-team-id="{{ game.home.id }}"
-                                data-team-name="{{ game.home.name }}"
-                                style="--team-primary: #{{ game.home.color }}; --team-secondary: #{{ game.home.alternate_color }};"
-                                {% if game.locked %}disabled{% endif %}>
-
-                                {% if game.locked %}
-                                Picks Locked
-                                {% else %}
-                                Pick the {{ game.home.name }}
-                                {% endif %}
-
-                            </button>
-
-                        </div>
-
-                    </div>
-
-
-                    <!-- Game Status -->
-                    <div class="text-center mt-3">
-                        <small class="text-muted">
-                            {{ game.status }}
-                        </small>
+                    <div class="col-5">
+                        <img src="{{ game.home.logo }}" alt="{{ game.home.name }}"
+                            style="height: 65px; max-width: 100%; object-fit: contain;">
+                        <h5 class="mt-2">{{ game.home.short_name }}</h5>
+                        <p class="text-muted mb-0">{{ game.home.record }}</p>
+                        <h4>{{ game.home.score }}</h4>
                     </div>
 
                 </div>
 
+                <div class="row g-2">
+
+                    <div class="col-6">
+                        <button class="pick-button w-100
+                                {% if user_picks.get(game.id) == game.away.id %}selected
+                                {% elif user_picks.get(game.id) == game.home.id %}not-selected
+                                {% endif %}" data-game-id="{{ game.id }}" data-team-id="{{ game.away.id }}"
+                            data-team-name="{{ game.away.short_name }}"
+                            style="--team-primary: #{{ game.away.color }}; --team-secondary: #{{ game.away.alternate_color }};"
+                            {% if game.locked %}disabled{% endif %}>
+
+                            {% if game.locked %}
+                            Picks Locked
+                            {% elif user_picks.get(game.id) == game.away.id %}
+                            Picked the {{ game.away.short_name }}
+                            {% else %}
+                            Pick the {{ game.away.short_name }}
+                            {% endif %}
+                        </button>
+                    </div>
+
+                    <div class="col-6">
+                        <button class="pick-button w-100
+                                {% if user_picks.get(game.id) == game.home.id %}selected
+                                {% elif user_picks.get(game.id) == game.away.id %}not-selected
+                                {% endif %}" data-game-id="{{ game.id }}" data-team-id="{{ game.home.id }}"
+                            data-team-name="{{ game.home.short_name }}"
+                            style="--team-primary: #{{ game.home.color }}; --team-secondary: #{{ game.home.alternate_color }};"
+                            {% if game.locked %}disabled{% endif %}>
+
+                            {% if game.locked %}
+                            Picks Locked
+                            {% elif user_picks.get(game.id) == game.home.id %}
+                            Picked the {{ game.home.short_name }}
+                            {% else %}
+                            Pick the {{ game.home.short_name }}
+                            {% endif %}
+                        </button>
+                    </div>
+
+                </div>
             </div>
-
         </div>
-
-        {% endfor %}
-
     </div>
-
-    {% else %}
-
-    <div class="text-center border rounded p-5">
-        <h4>No games scheduled</h4>
-
-        <p class="text-muted mb-0">
-            There are no games available for Week {{ week }}.
-        </p>
-    </div>
-
-    {% endif %}
-
+    {% endfor %}
 </div>
 
-
-<!-- Convert ESPN UTC kickoff times to browser's local timezone -->
 <script>
+    // Convert game times to the user's local timezone.
     document.querySelectorAll(".game-time").forEach(element => {
-
         const date = new Date(element.dataset.date);
 
         element.textContent = date.toLocaleString([], {
@@ -239,43 +120,57 @@ Pick'em 50
             hour: "numeric",
             minute: "2-digit"
         });
-
     });
-</script>
 
 
-<!-- Pick Button Selection -->
-<script>
-    document.querySelectorAll(".card").forEach(card => {
-
+    // Save picks and update button appearances.
+    document.querySelectorAll(".game-card").forEach(card => {
         const buttons = card.querySelectorAll(".pick-button");
 
         buttons.forEach(button => {
+            button.addEventListener("click", async () => {
 
-            button.addEventListener("click", () => {
+                const gameId = button.dataset.gameId;
+                const teamId = button.dataset.teamId;
 
-                // Reset both buttons.
-                buttons.forEach(team => {
-                    team.classList.remove("selected", "not-selected");
-                    team.textContent = "Pick the " + team.dataset.teamName;
-                });
+                try {
+                    const response = await fetch("/pick", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({
+                            game_id: gameId,
+                            team_id: teamId
+                        })
+                    });
 
-                // Highlight the selected team.
-                button.classList.add("selected");
+                    const result = await response.json();
 
-                button.textContent = "Picked the " + button.dataset.teamName;
-
-                // Grey out the opposing team.
-                buttons.forEach(team => {
-                    if (team !== button) {
-                        team.classList.add("not-selected");
+                    if (!response.ok) {
+                        alert(result.error || "Unable to save pick");
+                        return;
                     }
-                });
 
+                    buttons.forEach(team => {
+                        team.classList.remove("selected", "not-selected");
+                        team.textContent = "Pick the " + team.dataset.teamName;
+                    });
+
+                    button.classList.add("selected");
+                    button.textContent = "Picked the " + button.dataset.teamName;
+
+                    buttons.forEach(team => {
+                        if (team !== button) {
+                            team.classList.add("not-selected");
+                        }
+                    });
+
+                } catch (error) {
+                    alert("Unable to connect to the server.");
+                }
             });
-
         });
-
     });
 </script>
 

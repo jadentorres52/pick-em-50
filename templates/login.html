@@ -14,9 +14,17 @@
             <label for="password" class="form-label">Password</label>
             <input type="password" class="form-control" id="password" name="password" required>
         </div>
-        <button type="submit" class="btn btn-primary">Log In</button>
+        <button type="submit" id="login-button" class="btn btn-primary">Log In</button>
     </form>
 
     <p class="mt-3">Don't have an account? <a href="/register">Create One!</a></p>
 </div>
+
+<script>
+    document.querySelector("form").addEventListener("submit", function () {
+        const button = document.querySelector("#login-button");
+        button.textContent = "Logging you in...";
+        button.disabled = true;
+    });
+</script>
 {% endblock %}

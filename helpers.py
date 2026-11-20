@@ -50,7 +50,14 @@ def is_game_locked(event, now=None):
         event["date"].replace("Z", "+00:00")
     )
 
-    return (
-        now >= kickoff
-        or event["status"]["type"]["state"] == "post"
-    )
+    if now >= kickoff:
+        return True
+
+    status = event["competitions"][0]["status"]
+
+    if "$ref" in status:
+        response = requests.get(status["$ref"], timeout=10)
+        response.raise_for_status()
+        status = response.json()
+
+    return status["type"]["state"] in ("in", "post")
