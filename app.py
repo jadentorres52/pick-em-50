@@ -1,13 +1,13 @@
 import psycopg
 from psycopg.rows import dict_row
 from dotenv import load_dotenv
-from flask import Flask, render_template, redirect, request, session, flash
+from flask import Flask, abort, render_template, redirect, request, session, flash
 import os 
 from functools import wraps 
 from werkzeug.security import generate_password_hash, check_password_hash
 import requests 
-from datetime import datetime
-
+from datetime import datetime, timezone
+import helpers
 
 load_dotenv()
 app = Flask(__name__)
@@ -48,7 +48,7 @@ def login_required(f):
 @app.route("/")
 @login_required
 def index():
-    return '<h3>Worked!</h3>'
+    return redirect("/games")
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -141,6 +141,67 @@ def register():
 
     finally:
         conn.close()
+
+@app.route("/games")
+@login_required
+def games():
+    season = request.args.get(
+        "season",
+        default=helpers.current_nfl_season(),
+        type = int
+    )
+
+    week = request.args.get("week", type=int)
+
+    if week is None:
+        if season == helpers.current_nfl_season():
+            week = helpers.get_current_nfl_week(season)
+        else:
+            week = 1
+
+    if season < 1920 or season > helpers.current_nfl_season():
+        abort(404)
+
+    if not 1 <= week <= 18:
+        abort(404)
+
+    data = helpers.get_scoreboard(season,week)
+
+    games=[]
+    now = datetime.now(timezone.utc)
+
+    for event in data["events"]:
+        competitors = event["competitions"][0]["competitors"]
+        game = {
+            "id": event["id"],
+            "name": event["name"],
+            "date": event["date"],
+            "status": event["status"]["type"]["detail"],
+            "state": event["status"]["type"]["state"],
+            "locked": helpers.is_game_locked(event, now)
+        }
+
+        for competitor in competitors:
+            team = competitor["team"]
+            records = competitor.get("records", [])
+            
+            team_data = {
+                "name": team["displayName"],
+                "logo": team.get("logo"),
+                "record": records[0]["summary"] if records else "N/A",
+                "score": competitor.get("score", "0")
+            }  
+
+            if competitor["homeAway"] == "home":
+                game["home"] = team_data
+            else:
+                game["away"] = team_data
+
+        games.append(game)
+    return render_template("games.html",games=games,week=week,season=season)
+
+    
+
 
 
 init_db()
