@@ -18,7 +18,7 @@ def current_nfl_season():
 
 def get_scoreboard(season, week=None):
     params = {
-        "season": season,
+        "dates": season,
         "seasontype": 2
     }
 
