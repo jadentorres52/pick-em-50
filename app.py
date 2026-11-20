@@ -53,8 +53,13 @@ def index():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    
     if request.method == 'GET':
-        return render_template('login.html')
+        try:
+            if session["user_id"]:
+                return redirect("/")
+        except KeyError:
+            return render_template('login.html')
     else:
         username = request.form.get("username")
         if not username:
@@ -92,7 +97,11 @@ def logout():
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "GET":
-        return render_template("register.html")
+        try:
+            if session["user_id"]:
+                return redirect("/")
+        except KeyError:
+            return render_template("register.html")
 
     username = request.form.get("username")
     password = request.form.get("password")
