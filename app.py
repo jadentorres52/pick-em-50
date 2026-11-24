@@ -53,13 +53,10 @@ def index():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    
-    if request.method == 'GET':
-        try:
-            if session["user_id"]:
-                return redirect("/")
-        except KeyError:
-            return render_template('login.html')
+    if session.get("user_id"):
+        return redirect("/")
+    if request.method in ("GET", "HEAD"):
+        return render_template("login.html")
     else:
         username = request.form.get("username")
         if not username:
@@ -96,60 +93,58 @@ def logout():
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
-    if request.method == "GET":
-        try:
-            if session["user_id"]:
-                return redirect("/")
-        except KeyError:
-            return render_template("register.html")
+    if session.get("user_id"):
+        return redirect("/")
+    if request.method in ("GET", "HEAD"):
+        return render_template("register.html")
+    else:       
+        username = request.form.get("username")
+        password = request.form.get("password")
+        confirmation = request.form.get("confirmation")
 
-    username = request.form.get("username")
-    password = request.form.get("password")
-    confirmation = request.form.get("confirmation")
-
-    if not username:
-        flash("Username entered is invalid.")
-        return redirect("/register")
-
-    if not password:
-        flash("Password entered is invalid.")
-        return redirect("/register")
-
-    if not confirmation or password != confirmation:
-        flash("Password and confirmation do not match!")
-        return redirect("/register")
-
-    conn = get_db_connection()
-
-    try:
-        user = conn.execute(
-            "SELECT id FROM users WHERE username = %s",
-            (username,)
-        ).fetchone()
-
-        if user:
-            flash("Username already exists.")
+        if not username:
+            flash("Username entered is invalid.")
             return redirect("/register")
 
-        password_hash = generate_password_hash(password)
+        if not password:
+            flash("Password entered is invalid.")
+            return redirect("/register")
 
-        user = conn.execute(
-            """
-            INSERT INTO users (username, password_hash)
-            VALUES (%s, %s)
-            RETURNING id
-            """,
-            (username, password_hash)
-        ).fetchone()
+        if not confirmation or password != confirmation:
+            flash("Password and confirmation do not match!")
+            return redirect("/register")
 
-        conn.commit()
+        conn = get_db_connection()
 
-        session["user_id"] = user["id"]
+        try:
+            user = conn.execute(
+                "SELECT id FROM users WHERE username = %s",
+                (username,)
+            ).fetchone()
 
-        return redirect("/")
+            if user:
+                flash("Username already exists.")
+                return redirect("/register")
 
-    finally:
-        conn.close()
+            password_hash = generate_password_hash(password)
+
+            user = conn.execute(
+                """
+                INSERT INTO users (username, password_hash)
+                VALUES (%s, %s)
+                RETURNING id
+                """,
+                (username, password_hash)
+            ).fetchone()
+
+            conn.commit()
+
+            session["user_id"] = user["id"]
+
+            return redirect("/")
+
+        finally:
+            conn.close()
 
 @app.route("/games")
 @login_required
@@ -177,7 +172,6 @@ def games():
     data = helpers.get_scoreboard(season,week)
 
     games=[]
-    now = datetime.now(timezone.utc)
 
     for event in data["events"]:
         competitors = event["competitions"][0]["competitors"]
