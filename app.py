@@ -266,6 +266,97 @@ def pick():
     return jsonify({"success": True}), 200
 
 
+
+@app.route("/community-picks")
+@login_required
+def community_picks():
+
+    season = helpers.current_nfl_season()
+    week = helpers.get_current_nfl_week(season)
+    data = helpers.get_scoreboard(season, week)
+    events = data["events"]
+
+    game_ids = [event["id"] for event in events]
+
+    conn = get_db_connection()
+
+    try:
+        users = conn.execute(
+            "SELECT id, username FROM users ORDER BY username"
+        ).fetchall()
+
+        picks = conn.execute(
+            """
+            SELECT user_id, game_id, picked_team
+            FROM picks
+            WHERE game_id = ANY(%s)
+            """,
+            (game_ids,)
+        ).fetchall()
+
+    finally:
+        conn.close()
+
+    picks_by_game = {}
+
+    for pick in picks:
+        game_id = str(pick["game_id"])
+        user_id = pick["user_id"]
+
+        picks_by_game.setdefault(game_id, {})
+        picks_by_game[game_id][user_id] = str(pick["picked_team"])
+
+    games = []
+
+    for event in events:
+        game_id = str(event["id"])
+        competitors = event["competitions"][0]["competitors"]
+
+        teams = {}
+
+        for competitor in competitors:
+            team = competitor["team"]
+            teams[str(competitor["id"])] = team["displayName"]
+
+        locked = helpers.is_game_locked(event)
+
+        game = {
+            "id": game_id,
+            "name": event["name"],
+            "date": event["date"],
+            "status": event["status"]["type"]["detail"],
+            "locked": locked,
+            "picks": {}
+        }
+
+        for user in users:
+            user_id = user["id"]
+            username = user["username"]
+
+            if not locked:
+                game["picks"][username] = "Hidden"
+            else:
+                picked_team = picks_by_game.get(game_id, {}).get(user_id)
+
+                if picked_team:
+                    game["picks"][username] = teams.get(
+                        picked_team,
+                        "Invalid pick"
+                    )
+                else:
+                    game["picks"][username] = "No pick"
+
+        games.append(game)
+
+    return render_template(
+        "community_picks.html",
+        games=games,
+        users=users,
+        week=week,
+        season=season
+    )
+
+
 init_db()
 
 if __name__ == "__main__":
