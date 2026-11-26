@@ -356,7 +356,88 @@ def community_picks():
         season=season
     )
 
+@app.route("/leaderboard")
+@login_required
+def leaderboard():
+    return render_template("loading_leaderboard.html")
 
+@app.route("/leaderboard-results")
+@login_required
+def leaderboard_results():
+
+    season = helpers.current_nfl_season()
+
+    events = {}
+
+    # Get games from every regular-season week
+    for week in range(1, 19):
+        data = helpers.get_scoreboard(season, week)
+
+        for event in data["events"]:
+            events[str(event["id"])] = event
+
+    conn = get_db_connection()
+
+    try:
+        picks = conn.execute(
+            """
+            SELECT id, game_id, picked_team
+            FROM picks
+            """
+        ).fetchall()
+
+        # Grade completed games
+        for pick in picks:
+
+            event = events.get(str(pick["game_id"]))
+
+            if event is not None and event["status"]["type"]["completed"]:
+
+                competitors = event["competitions"][0]["competitors"]
+
+                winner = None
+
+                for team in competitors:
+                    if team.get("winner") is True:
+                        winner = team
+
+                if winner is not None:
+                    correct = str(pick["picked_team"]) == str(winner["id"])
+
+                    conn.execute(
+                        """
+                        UPDATE picks
+                        SET correct = %s
+                        WHERE id = %s
+                        """,
+                        (correct, pick["id"])
+                    )
+
+        conn.commit()
+
+        # Calculate each user's points
+        leaderboard_data = conn.execute(
+            """
+            SELECT
+                users.username,
+                COUNT(picks.id) FILTER (
+                    WHERE picks.correct = TRUE
+                ) AS points
+            FROM users
+            LEFT JOIN picks
+                ON users.id = picks.user_id
+            GROUP BY users.id, users.username
+            ORDER BY points DESC, users.username ASC
+            """
+        ).fetchall()
+
+    finally:
+        conn.close()
+
+    return render_template(
+        "leaderboard.html",
+        leaderboard=leaderboard_data
+    )
 init_db()
 
 if __name__ == "__main__":
